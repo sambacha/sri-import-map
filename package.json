@@ -1,0 +1,16 @@
+{
+  "name": "esm_sri",
+  "version": "1.0.0",
+  "description": "// Example: initialize when DOM is ready document.addEventListener('DOMContentLoaded', () => {   initializeModules().catch(console.error); });",
+  "main": "integration-test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "sam bacha",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4"
+  }
+}

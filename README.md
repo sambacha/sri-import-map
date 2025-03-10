@@ -1,35 +1,31 @@
+# SRI Module Integrity via Import Map
 
-// Example: initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  initializeModules().catch(console.error);
-});
+> [!WARNING]
+> This is not production ready, beware slop ahead
 
 
-/**
- * Example usage
+This project provides tools for generating and validating Subresource Integrity (SRI) hashes for ES modules via an import map.
 
-async function initializeModules(): Promise<void> {
-  try {
-    // Define modules
-    const modules = {
-      'square': './module/shapes/square.js',
-      'circle': './module/shapes/circle.js',
-      'app': './module/app.js'
-    };
+> It helps ensure that the modules you load in your application haven't been tampered with, improving security and reliability.
 
-    // Generate import map with integrity
-    const importMap = await generateImportMapWithIntegrity(modules);
-    
-    // Inject the import map into the document
-    injectImportMap(importMap);
-    
-    console.log('Import map with integrity successfully injected');
-    
-    // Now you can safely use dynamic imports, and integrity will be verified
-    const square = await import('square');
-    square.draw();
-  } catch (error) {
-    console.error('Error initializing modules:', error);
-  }
+
+### How it Should Work 
+
+
+```javascript
+// Example usage
+import { generateImportMapWithIntegrity, injectImportMap } from './src/module-integrity-typescript';
+
+async function initializeModules() {
+  const modules = {
+    'square': './module/shapes/square.js',
+    'circle': './module/shapes/circle.js',
+    'app': './module/app.js'
+  };
+
+  const importMap = await generateImportMapWithIntegrity(modules);
+  injectImportMap(importMap);
 }
- */
+
+initializeModules();
+```
