@@ -1,16 +1,36 @@
 {
-  "name": "esm_sri",
-  "version": "1.0.0",
-  "description": "// Example: initialize when DOM is ready document.addEventListener('DOMContentLoaded', () => {   initializeModules().catch(console.error); });",
-  "main": "integration-test.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "sam bacha",
-  "license": "ISC",
-  "type": "commonjs",
-  "devDependencies": {
-    "@biomejs/biome": "1.9.4"
-  }
+	"name": "esm_sri",
+	"version": "2.0.0",
+	"description": "Module integrity system for NextJS applications with SHA-384 support",
+	"main": "integration-test.js",
+	"scripts": {
+		"build": "tsc",
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+		"nextjs",
+		"security",
+		"integrity",
+		"sri",
+		"subresource",
+		"sha384"
+	],
+	"author": "sam bacha",
+	"license": "ISC",
+	"type": "commonjs",
+	"peerDependencies": {
+		"next": "^15.0.0",
+		"react": "^18.0.0",
+		"react-dom": "^18.0.0"
+	},
+	"dependencies": {
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.9.4",
+		"@types/node": "^20.11.0",
+		"@types/react": "^18.2.45",
+		"typescript": "^5.3.3"
+	}
 }

@@ -1,112 +1,112 @@
 // vite-plugin-module-integrity.ts
-import { Plugin, ResolvedConfig } from 'vite';
-import { createHash } from 'crypto';
-import fs from 'fs/promises';
-import path from 'path';
+import { Plugin, ResolvedConfig } from "vite";
+import { createHash } from "crypto";
+import fs from "fs/promises";
+import path from "path";
 
 interface ModuleIntegrityOptions {
-  /**
-   * Extensions to include when generating integrity hashes
-   */
-  extensions?: string[];
-  
-  /**
-   * Hash algorithm to use
-   */
-  algorithm?: 'sha256' | 'sha384' | 'sha512';
-  
-  /**
-   * Output path for the generated import map (relative to dist)
-   */
-  importMapPath?: string;
+	/**
+	 * Extensions to include when generating integrity hashes
+	 */
+	extensions?: string[];
+
+	/**
+	 * Hash algorithm to use
+	 */
+	algorithm?: "sha256" | "sha384" | "sha512";
+
+	/**
+	 * Output path for the generated import map (relative to dist)
+	 */
+	importMapPath?: string;
 }
 
 interface ImportMap {
-  imports: Record<string, string>;
-  integrity: Record<string, string>;
+	imports: Record<string, string>;
+	integrity: Record<string, string>;
 }
 
-export default function moduleIntegrityPlugin(options: ModuleIntegrityOptions = {}): Plugin {
-  const {
-    extensions = ['.js', '.jsx', '.ts', '.tsx', '.mjs'],
-    algorithm = 'sha384',
-    importMapPath = 'importmap.json',
-  } = options;
-  
-  let config: ResolvedConfig;
-  const importMap: ImportMap = {
-    imports: {},
-    integrity: {},
-  };
-  
-  return {
-    name: 'vite-plugin-module-integrity',
-    
-    configResolved(resolvedConfig) {
-      config = resolvedConfig;
-    },
-    
-    async generateBundle(_, bundle) {
-      // Calculate integrity hashes for all assets with matching extensions
-      for (const [fileName, asset] of Object.entries(bundle)) {
-        if (!extensions.some(ext => fileName.endsWith(ext))) {
-          continue;
-        }
-        
-        // Get asset content as string
-        let content: string;
-        if ('code' in asset) {
-          content = asset.code;
-        } else if ('source' in asset) {
-          if (typeof asset.source === 'string') {
-            content = asset.source;
-          } else {
-            content = Buffer.from(asset.source).toString('utf-8');
-          }
-        } else {
-          continue;
-        }
-        
-        // Calculate hash using specified algorithm
-        const hash = createHash(algorithm)
-          .update(content)
-          .digest('base64');
-        
-        // Add to import map
-        const integrity = `${algorithm}-${hash}`;
-        const assetPath = config.base + fileName;
-        
-        // Add the module to imports and integrity maps
-        const moduleName = fileName.replace(/\.\w+$/, '');
-        importMap.imports[moduleName] = assetPath;
-        importMap.integrity[assetPath] = integrity;
-        
-        // Also include the full path for direct matches
-        importMap.imports[assetPath] = assetPath;
-        
-        // For entry chunks, add special mapping
-        if ('isEntry' in asset && asset.isEntry) {
-          importMap.imports[`entry:${fileName}`] = assetPath;
-        }
-      }
-      
-      // Write import map to output directory
-      const importMapJson = JSON.stringify(importMap, null, 2);
-      this.emitFile({
-        type: 'asset',
-        fileName: importMapPath,
-        source: importMapJson,
-      });
-      
-      // Inject script to load the import map
-      const publicDir = path.join(config.root, 'public');
-      try {
-        const indexHtmlPath = path.join(publicDir, 'index.html');
-        const indexHtml = await fs.readFile(indexHtmlPath, 'utf-8');
-        
-        const updatedHtml = indexHtml.replace(
-          '</head>',
-          `<script type="module">
+export default function moduleIntegrityPlugin(
+	options: ModuleIntegrityOptions = {},
+): Plugin {
+	const {
+		extensions = [".js", ".jsx", ".ts", ".tsx", ".mjs"],
+		algorithm = "sha384",
+		importMapPath = "importmap.json",
+	} = options;
+
+	let config: ResolvedConfig;
+	const importMap: ImportMap = {
+		imports: {},
+		integrity: {},
+	};
+
+	return {
+		name: "vite-plugin-module-integrity",
+
+		configResolved(resolvedConfig) {
+			config = resolvedConfig;
+		},
+
+		async generateBundle(_, bundle) {
+			// Calculate integrity hashes for all assets with matching extensions
+			for (const [fileName, asset] of Object.entries(bundle)) {
+				if (!extensions.some((ext) => fileName.endsWith(ext))) {
+					continue;
+				}
+
+				// Get asset content as string
+				let content: string;
+				if ("code" in asset) {
+					content = asset.code;
+				} else if ("source" in asset) {
+					if (typeof asset.source === "string") {
+						content = asset.source;
+					} else {
+						content = Buffer.from(asset.source).toString("utf-8");
+					}
+				} else {
+					continue;
+				}
+
+				// Calculate hash using specified algorithm
+				const hash = createHash(algorithm).update(content).digest("base64");
+
+				// Add to import map
+				const integrity = `${algorithm}-${hash}`;
+				const assetPath = config.base + fileName;
+
+				// Add the module to imports and integrity maps
+				const moduleName = fileName.replace(/\.\w+$/, "");
+				importMap.imports[moduleName] = assetPath;
+				importMap.integrity[assetPath] = integrity;
+
+				// Also include the full path for direct matches
+				importMap.imports[assetPath] = assetPath;
+
+				// For entry chunks, add special mapping
+				if ("isEntry" in asset && asset.isEntry) {
+					importMap.imports[`entry:${fileName}`] = assetPath;
+				}
+			}
+
+			// Write import map to output directory
+			const importMapJson = JSON.stringify(importMap, null, 2);
+			this.emitFile({
+				type: "asset",
+				fileName: importMapPath,
+				source: importMapJson,
+			});
+
+			// Inject script to load the import map
+			const publicDir = path.join(config.root, "public");
+			try {
+				const indexHtmlPath = path.join(publicDir, "index.html");
+				const indexHtml = await fs.readFile(indexHtmlPath, "utf-8");
+
+				const updatedHtml = indexHtml.replace(
+					"</head>",
+					`<script type="module">
             // Load the import map
             (async function() {
               const response = await fetch('${config.base}${importMapPath}');
@@ -119,20 +119,22 @@ export default function moduleIntegrityPlugin(options: ModuleIntegrityOptions = 
               document.head.appendChild(script);
             })();
           </script>
-          </head>`
-        );
-        
-        await fs.writeFile(indexHtmlPath, updatedHtml);
-      } catch (error) {
-        // Handle case where index.html might not exist or isn't accessible
-        this.warn(`Failed to inject import map loader into index.html: ${error}`);
-      }
-    },
-    
-    // Inject integrity validation helper into the build
-    async closeBundle() {
-      // Create a helper file for module integrity validation
-      const validationHelper = `
+          </head>`,
+				);
+
+				await fs.writeFile(indexHtmlPath, updatedHtml);
+			} catch (error) {
+				// Handle case where index.html might not exist or isn't accessible
+				this.warn(
+					`Failed to inject import map loader into index.html: ${error}`,
+				);
+			}
+		},
+
+		// Inject integrity validation helper into the build
+		async closeBundle() {
+			// Create a helper file for module integrity validation
+			const validationHelper = `
       // module-integrity.js
       /**
        * Get the current import map from the document
@@ -256,12 +258,12 @@ export default function moduleIntegrityPlugin(options: ModuleIntegrityOptions = 
         return state;
       }
       `;
-      
-      this.emitFile({
-        type: 'asset',
-        fileName: 'module-integrity.js',
-        source: validationHelper,
-      });
-    }
-  };
+
+			this.emitFile({
+				type: "asset",
+				fileName: "module-integrity.js",
+				source: validationHelper,
+			});
+		},
+	};
 }
